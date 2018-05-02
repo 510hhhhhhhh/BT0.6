@@ -9,9 +9,8 @@ from teleop_controller.msg import EnemyPos, ShootCmd, ModeSW
 
 import sys, select, termios, tty, time
 
-class Controller():
-    def __init__(self, robotname):
-        self.robotname =robotname
+class Controller(robotname):
+    def __init__(self):
         self.msg = """
         Reading from the keyboard  and Publishing to Twist!
         ---------------------------
@@ -89,18 +88,17 @@ class Controller():
             'B': (0, 0, 1, -100),
             '0': (0, 0, 0, 0),
         }
-        self.vel_pub = rospy.Publisher(self.robotname + 'cmd_vel', Twist, queue_size=1)
+        self.vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
         #发布云台指向,模拟视觉输出信息
-        self.gimbal_pub = rospy.Publisher(self.robotname + 'enemy_pos', EnemyPos, queue_size=1)
+        self.gimbal_pub = rospy.Publisher('enemy_pos', EnemyPos, queue_size=1)
         #射击指令
-        self.shoot_pub = rospy.Publisher(self.robotname + 'shoot_cmd', ShootCmd, queue_size=1)
+        self.shoot_pub = rospy.Publisher('shoot_cmd', ShootCmd, queue_size=1)
         #模式切换
-        self.modesw_pub = rospy.Publisher(self.robotname + 'switch_mode', ModeSW, queue_size=1)
+        self.modesw_pub = rospy.Publisher('switch_mode', ModeSW, queue_size=1)
         #发布目标点
-        self.nav_goal_pub = rospy.Publisher(self.robotname + 'move_base_simple/goal', PoseStamped, queue_size=1)
+        self.nav_goal_pub = rospy.Publisher('move_base_simple/goal', PoseStamped, queue_size=1)
         self.shoot_cmd = ShootCmd()
     def getKey(self):
-        settings = termios.tcgetattr(sys.stdin)
         tty.setraw(sys.stdin.fileno())
         select.select([sys.stdin], [], [], 0)
         key = sys.stdin.read(1)
@@ -142,7 +140,8 @@ if __name__ == "__main__":
     sc =0
     csc=0
     fwr = 0
-    fws = 1215    #定义三种消息类
+    fws = 1500
+    #定义三种消息类
     twist = Twist()
     gimbal = EnemyPos()
     shoot = ShootCmd()
@@ -161,11 +160,11 @@ if __name__ == "__main__":
                 y = teleop.moveBindings[key][1]
                 z = teleop.moveBindings[key][2]
 
-                twist.linear.x = x * speed
-                twist.linear.y = y * speed
-                twist.linear.z = z * speed
-                twist.angular.x = 0
-                twist.angular.y = 0
+                twist.linear.x = x * speed;
+                twist.linear.y = y * speed;
+                twist.linear.z = z * speed;
+                twist.angular.x = 0;
+                twist.angular.y = 0;
                 twist.angular.z = th * turn
                 th = teleop.moveBindings[key][3]
                 teleop.vel_pub.publish(twist)#发布速度信息

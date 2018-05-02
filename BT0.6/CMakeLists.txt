@@ -55,6 +55,10 @@ add_message_files(
     EnemyPos.msg
     ShootCmd.msg
     ModeSW.msg
+    GameBuff.msg
+    Hurt.msg
+    GameInfo.msg
+    RFID.msg
  )
 
 ## Generate services in the 'srv' folder

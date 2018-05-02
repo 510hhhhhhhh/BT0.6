@@ -32,9 +32,9 @@ AUTO_SEPARATE_GIMBAL = 5   #底盘和云台分离模式，旋转、平移受上�
 AUTO_FOLLOW_GIMBAL = 6     # 底盘跟随云台，平移受上层控制
 
 #启动控制器和环境类
-# rospy.init_node('robot_1_BattleSim')
-controller = Controller('robot_1/')
-env = BattleEnv('robot_1')
+# rospy.init_node('robot_0_BattleSim')
+controller = Controller('/')
+env = BattleEnv('robot_0')
 tflistener = tf.TransformListener()
 #定义控制命令
 vel = Twist()
@@ -49,14 +49,13 @@ controller.shoot_cmd.shoot_cmd =0
 controller.shoot(controller.shoot_cmd)
 time.sleep(0.2)
 #接受机器人状态消息
-rospy.Subscriber('robot_1/gimbalpos', EnemyPos, env.getGimbalPoseCallback)
-rospy.Subscriber('robot_1/rfid', RFID, env.getRFIDCallback)
-rospy.Subscriber('robot_1/hurt', Hurt, env.getHurtInfoCallback)
-rospy.Subscriber('robot_1/gameinfo', GameInfo, env.getMyHPCallback)
-rospy.Subscriber('robot_1/my_pose', Odometry, env.getSelfPoseCallback)
+rospy.Subscriber('gimbalpos', EnemyPos, env.getGimbalPoseCallback)
+rospy.Subscriber('rfid', RFID, env.getRFIDCallback)
+rospy.Subscriber('hurt', Hurt, env.getHurtInfoCallback)
+rospy.Subscriber('my_pose', Odometry, env.getSelfPoseCallback)
+rospy.Subscriber('gameinfo', GameInfo, env.getMyHPCallback)
 time.sleep(0.1)
-rospy.Subscriber('robot_1/enemy_pos', EnemyPos, env.getEnemyPoseCallback)
-
+rospy.Subscriber('enemy_pos', EnemyPos, env.getEnemyPoseCallback)
 time.sleep(0.1)
 
 class BiuldTree():
@@ -158,9 +157,9 @@ class GoToCenterTask(Task):
         self.blackboard = blackboard
 
     def run(self):
-        goal_x = 4
-        goal_y = 3.5
-        goal_yaw = -90
+        goal_x = 4.0
+        goal_y = 2.5
+        goal_yaw = -5
 
         time2 = rospy.Time.now().secs
         if (self.blackboard.getbuff == False):
@@ -185,7 +184,7 @@ class CheckBuff(Task):
         self.flag = 0
         self.timestart = rospy.Time.now().secs
     def run(self):
-        if (pow(self.blackboard.MyPose['x'] - 4, 2) + pow(self.blackboard.MyPose['y'] - 3.5, 2)) < 0.1 or env.getbuff == True:
+        if (pow(self.blackboard.MyPose['x'] - 4, 2) + pow(self.blackboard.MyPose['y'] - 2.5, 2)) < 0.1 or env.getbuff == True:
             if self.flag == 0:
                 self.timestart = rospy.Time.now().secs
                 self.flag = 1
@@ -366,7 +365,7 @@ class Dodge(Task):
         self.name = name
         self.controller = controller
         self.blackboard = blackboard
-        self.twist =Twist()
+        self.twist = Twist()
     def run(self):
         # twist = Twist()
         self.twist.linear.x = 0
@@ -432,7 +431,6 @@ class RunAway(Task):
         self.flag_p = 0
         self.flag = 0
         self.starttime = 0
-
     def run(self):
         # hp = GameInfo()
         # hp.remain_hp
@@ -446,7 +444,7 @@ class RunAway(Task):
         # twist.angular.z = 1
         # self.controller.send_vel(twist)
         i = self.flag_p
-        if ((pow(self.blackboard.MyPose['x'] - self.blackboard.RunPoints[0, i], 2) + pow(self.blackboard.MyPose['y'] - self.blackboard.RunPoints[1, i],2)) > 0.1) and rospy.Time.now().secs - self.starttime < 10:
+        if ((pow(self.blackboard.MyPose['x'] - self.blackboard.RunPoints[0, i], 2) + pow(self.blackboard.MyPose['y'] - self.blackboard.RunPoints[1, i], 2)) > 0.1) and rospy.Time.now().secs - self.starttime < 10:
             if env.sended == False:
                 if env.isActionAvaliable(self.blackboard.RunPoints[0, i], self.blackboard.RunPoints[1, i], self.blackboard.MyPose['theta']):
                     print 'sending RUNNING goal successful'
@@ -455,7 +453,7 @@ class RunAway(Task):
             print "I AM RUNNING AWAY, point is x=%s\ty=%s" % (self.blackboard.RunPoints[0, i], self.blackboard.RunPoints[1, i])
             return TaskStatus.RUNNING
         else:
-            self.flag_p = self.flag_p + 1
+            self.flag_p = self.flag_p +1
             if self.flag_p > 3:
                 self.flag_p = 0
             self.flag = 0
@@ -565,23 +563,18 @@ class RandomPoint(Task):
             return TaskStatus.SUCCESS
 
 if __name__ == '__main__':
-    # rospy.init_node('robot_1_BattleSim')
+    # rospy.init_node('robot_0_BattleSim')
     controller.shoot_cmd.fric_wheel_spd = 1200
     controller.shoot_cmd.fric_wheel_run = 1
     controller.shoot_cmd.c_shoot_cmd = 0
     controller.shoot_cmd.shoot_cmd = 0
     controller.shoot(controller.shoot_cmd)
-
-
+    # rospy.init_node('robot_0_BattleSim')
     print "press s to start"
     while True:
         key = controller.getKey()
         if key == "s":
             print "start"
             break
-    env.isActionAvaliable(1.5, 3.2, 0)
-    print 'sending initial goal successful'
-    controller.send_goal(env.navgoal)  # 发送目标
-    time.sleep(3)
     tree = BiuldTree()
 

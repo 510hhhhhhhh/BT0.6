@@ -90,7 +90,7 @@ class Controller():
             'B': (0, 0, 1, -100),
             '0': (0, 0, 0, 0),
         }
-        self.vel_pub = rospy.Publisher('robot_1/cmd_vel', Twist, queue_size=1)
+        self.vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
         #发布云台指向,模拟视觉输出信息
         self.gimbal_pub = rospy.Publisher('enemy_pos', EnemyPos, queue_size=1)
         #射击指令

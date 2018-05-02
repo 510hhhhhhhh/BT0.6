@@ -5,7 +5,7 @@ from PIL import Image
 import rospy
 from geometry_msgs.msg import PoseStamped, Quaternion, PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry
-from teleop_controller.msg import ShootCmd, EnemyPos
+from teleop_controller.msg import ShootCmd, EnemyPos, Hurt, GameBuff, GameInfo, RFID
 import time
 import math
 import tf
@@ -14,7 +14,7 @@ from teleop_control import Controller
 
 
 class BattleEnv():
-    def __init__(self):
+    def __init__(self, robotname):
         self.action_space = ['N', 'E', 'W', 'S', 'NE', 'NW', 'SE', 'SW', 'shoot']
         self.map = np.array(Image.open("icra2.pgm"))
         self.shoot_pub = rospy.Publisher('shoot_cmd', ShootCmd, queue_size=1)
@@ -43,7 +43,14 @@ class BattleEnv():
         self.getbuff = False
         self.sended = False
         self.gimbalYawSave = 0
-        rospy.init_node('BattleSim')
+        self.dodgeflag = 0
+        self.witch_armor = -1
+        self.Rfid = RFID()
+        self.MyHP = GameInfo()
+        self.MyHP.remain_hp = 2000
+        self.minHP = 500
+        self.RunPoints = np.array([[1, 7, 7, 1],[1, 0.5, 4.5, 4.5]])
+        rospy.init_node(robotname + 'BattleSim')
 
     def reset(self):
         # 重置仿真环境
@@ -102,7 +109,7 @@ class BattleEnv():
             self.EnemyPoseSave.enemy_dist = data.enemy_dist / 1000
         else:
             self.num = self.num + 1
-        if self.num > 100:
+        if self.num > 30:
             self.enemyNew = False
             self.EnemyPoseSave.enemy_yaw = 0
             self.EnemyPoseSave.enemy_pitch = 0
@@ -136,6 +143,24 @@ class BattleEnv():
         # if self.EnemyPose.enemy_dist != 0:
         #     self.enemyNew = True
         # print('Get enemy pose')
+
+    def getHurtInfoCallback(self, data):
+        #data = Hurt()
+        # self.witch_armor = -1
+        if data.armor_type == 0 and data.hurt_type == 0:
+            self.witch_armor = 0
+        if data.armor_type == 1 and data.hurt_type == 0:
+            self.witch_armor = 1
+        if data.armor_type == 2 and data.hurt_type == 0:
+            self.witch_armor = 2
+        if data.armor_type == 3 and data.hurt_type == 0:
+            self.witch_armor = 3
+
+    def getRFIDCallback(self, data):
+        self.Rfid = data
+
+    def getMyHPCallback(self, data):
+        self.MyHP = data
 
     '''
     仿真步进，根据状态动作输出回报
@@ -201,7 +226,7 @@ class BattleEnv():
         x_goal = int(px / 0.05)
         y_goal = int(py / 0.05)
         quat = tf.transformations.quaternion_from_euler(0, 0, theta*3.1416/180)
-        if (y_goal<=15)  or (y_goal >= 107) or (x_goal >= 165) or (x_goal <= 15):
+        if (y_goal<=5)  or (y_goal >= 117) or (x_goal >= 175) or (x_goal <= 5):
             print('out of map!!!!!')
             pass
         elif self.map[101 - y_goal +10, x_goal + 10] == 255:  # 是否在地图可行区域
